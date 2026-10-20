@@ -1,0 +1,42 @@
+@import '@fontsource-variable/inter';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root, [data-theme='dark'] {
+  --bg: 11 13 18; --surface: 18 21 29; --surface2: 25 29 39; --line: 39 44 56;
+  --fg: 241 243 248; --muted: 146 153 168; --accent: 124 140 255;
+  --ok: 74 189 140; --danger: 240 108 117;
+}
+[data-theme='light'] {
+  --bg: 246 247 250; --surface: 255 255 255; --surface2: 240 242 247; --line: 224 227 235;
+  --fg: 20 23 31; --muted: 98 106 122; --accent: 82 98 230;
+  --ok: 25 150 100; --danger: 210 60 70;
+}
+html, body, #root { height: 100%; }
+body { @apply bg-bg text-fg font-sans antialiased; transition: background-color .25s, color .25s; }
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+@layer components {
+  .field { @apply h-10 w-full rounded-ctl border border-line bg-surface px-3 text-sm outline-none transition-colors placeholder:text-muted focus:border-accent; }
+  .card { @apply rounded-card border border-line bg-surface/85; }
+  .lift { transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s, border-color .25s; }
+  .lift:hover { transform: translateY(-2px); border-color: rgb(var(--accent) / .45); box-shadow: 0 14px 34px -16px rgb(var(--accent) / .45); }
+  .sheen::after { content: ''; position: absolute; inset: 0; transform: translateX(-120%) skewX(-20deg); background: linear-gradient(90deg, transparent, rgb(255 255 255 / .28), transparent); transition: transform .7s cubic-bezier(.22,1,.36,1); pointer-events: none; }
+  .sheen:hover::after { transform: translateX(120%) skewX(-20deg); }
+}
+/* Анимированный фон: только transform, без blur-фильтров */
+:root { --blob-o: .55; } [data-theme='light'] { --blob-o: .4; }
+.blob { position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%; will-change: transform; }
+.blob-a { top: -25%; left: -15%; animation: driftA 34s ease-in-out infinite; }
+.blob-b { bottom: -30%; right: -20%; animation: driftB 42s ease-in-out infinite; }
+.blob-c { top: 20%; left: 35%; width: 40vmax; height: 40vmax; animation: driftC 50s ease-in-out infinite; }
+@keyframes driftA { 0%,100% { transform: translate3d(0,0,0) scale(1) } 50% { transform: translate3d(18%,12%,0) scale(1.18) } }
+@keyframes driftB { 0%,100% { transform: translate3d(0,0,0) scale(1.1) } 50% { transform: translate3d(-20%,-14%,0) scale(.92) } }
+@keyframes driftC { 0%,100% { transform: translate3d(0,0,0) } 33% { transform: translate3d(-25%,15%,0) } 66% { transform: translate3d(20%,-10%,0) } }
+.dotgrid { background-image: radial-gradient(rgb(var(--fg) / .07) 1px, transparent 1px); background-size: 28px 28px; -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse at 50% 30%, #000 20%, transparent 75%); animation: gridShift 60s linear infinite; }
+@keyframes gridShift { to { background-position: 28px 28px } }
+@media (prefers-reduced-motion: reduce) { .blob, .dotgrid { animation: none !important; } }
