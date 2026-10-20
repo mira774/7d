@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth'
 import { MAX_FILE, can, errMsg, ok, removeFiles, savePost, uploadFile } from '../lib/api'
 import { useLive, useProfiles } from '../lib/live'
 import { supabase } from '../lib/supabase'
-import type { FileRef, Post, PostKind } from '../lib/types'
+import type { FileRef, Perm, Post, PostKind } from '../lib/types'
 import { fmtDate, fmtSize, todayStr } from '../lib/util'
 import { ease, spring } from '../lib/motion'
 
@@ -26,7 +26,7 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
   const [keep, setKeep] = useState<FileRef[]>(post?.files ?? []); const [fresh, setFresh] = useState<File[]>([])
   const [error, setError] = useState(''); const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
 
-  const kStr = kind as string
+  const kStr = String(kind)
 
   function pick(list: FileList | null) {
     if (!list) return
@@ -72,8 +72,8 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
 
 export function Feed({ kind }: { kind: PostKind }) {
   const { profile } = useAuth(); const me = profile!; const cfg = CFG[kind as keyof typeof CFG] || CFG.homework
-  const canEdit = can(me, kind)
-  const kStr = kind as string
+  const canEdit = can(me, kind as Perm)
+  const kStr = String(kind)
   const posts = useLive(async () => ok(await supabase.from('posts').select('*').eq('kind', kind).order('created_at', { ascending: false })) as Post[], ['posts'], [kind])
   const doneQ = useLive(async () => (ok(await supabase.from('homework_done').select('post_id').eq('user_id', me.id)) as { post_id: string }[]).map(r => r.post_id), ['homework_done'], [me.id])
   const { names } = useProfiles()
