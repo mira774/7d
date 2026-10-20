@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  base: '/7d/',
+  base: '/7d/', // <--- Обязательно укажи путь к репозиторию
   plugins: [react()],
 })
