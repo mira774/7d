@@ -26,6 +26,8 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
   const [keep, setKeep] = useState<FileRef[]>(post?.files ?? []); const [fresh, setFresh] = useState<File[]>([])
   const [error, setError] = useState(''); const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
 
+  const kStr = kind as string
+
   function pick(list: FileList | null) {
     if (!list) return
     const arr = [...list]; const big = arr.find(f => f.size > MAX_FILE)
@@ -47,13 +49,13 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
   return (
     <form onSubmit={submit} className="space-y-3">
       <input className="field" placeholder="Заголовок" value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} />
-      {kind !== 'news' && (<>
+      {kStr !== 'news' && (<>
         <input className="field" placeholder="Предмет (например, Алгебра)" list="subjects" value={subject} onChange={e => setSubject(e.target.value)} required />
         <datalist id="subjects">{subjects.map(s => <option key={s} value={s} />)}</datalist>
       </>)}
-      {kind === 'homework' && <label className="flex items-center gap-3 text-sm text-muted">Срок сдачи<input type="date" className="field w-auto" value={due} onChange={e => setDue(e.target.value)} /></label>}
+      {kStr === 'homework' && <label className="flex items-center gap-3 text-sm text-muted">Срок сдачи<input type="date" className="field w-auto" value={due} onChange={e => setDue(e.target.value)} /></label>}
       <textarea className="field min-h-28 py-2" placeholder="Текст, решение или ссылки" value={body} onChange={e => setBody(e.target.value)} />
-      {kind === 'news' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)]} className="accent-[rgb(var(--accent))]" />Закрепить вверху</label>}
+      {kStr === 'news' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} className="accent-[rgb(var(--accent))]" />Закрепить вверху</label>}
       <div className="space-y-2">
         {rows.map(f => (
           <div key={f.key} className="flex items-center justify-between rounded-ctl border border-line px-3 py-1.5 text-sm"><span className="truncate">{f.name} <span className="text-muted">{fmtSize(f.size)}</span></span>
@@ -69,8 +71,9 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
 }
 
 export function Feed({ kind }: { kind: PostKind }) {
-  const { profile } = useAuth(); const me = profile!; const cfg = CFG[kind]
+  const { profile } = useAuth(); const me = profile!; const cfg = CFG[kind as keyof typeof CFG] || CFG.homework
   const canEdit = can(me, kind)
+  const kStr = kind as string
   const posts = useLive(async () => ok(await supabase.from('posts').select('*').eq('kind', kind).order('created_at', { ascending: false })) as Post[], ['posts'], [kind])
   const doneQ = useLive(async () => (ok(await supabase.from('homework_done').select('post_id').eq('user_id', me.id)) as { post_id: string }[]).map(r => r.post_id), ['homework_done'], [me.id])
   const { names } = useProfiles()
@@ -95,9 +98,9 @@ export function Feed({ kind }: { kind: PostKind }) {
     await removeFiles(p.files.map(f => f.path)); void posts.reload()
   }
 
-  const list = all.filter(p => (subject === 'Все' || p.subject === subject) && (kind !== 'homework' || flt === 'all' || (flt === 'done') === isDone(p.id))
+  const list = all.filter(p => (subject === 'Все' || p.subject === subject) && (kStr !== 'homework' || flt === 'all' || (flt === 'done') === isDone(p.id))
     && (p.title + ' ' + p.body).toLowerCase().includes(q.trim().toLowerCase()))
-    .sort((a, b) => kind === 'homework' ? (a.due_date || '9').localeCompare(b.due_date || '9') : kind === 'news' ? Number(b.pinned) - Number(a.pinned) || b.created_at.localeCompare(a.created_at) : b.created_at.localeCompare(a.created_at))
+    .sort((a, b) => kStr === 'homework' ? (a.due_date || '9').localeCompare(b.due_date || '9') : kStr === 'news' ? Number(b.pinned) - Number(a.pinned) || b.created_at.localeCompare(a.created_at) : b.created_at.localeCompare(a.created_at))
 
   const Chip = ({ id, label, active, on }: { id: string; label: string; active: boolean; on: () => void }) => (
     <button onClick={on} className={`relative rounded-full px-3 py-1 text-sm transition-colors ${active ? 'text-white' : 'text-muted hover:text-fg'}`}>
@@ -110,11 +113,11 @@ export function Feed({ kind }: { kind: PostKind }) {
         {canEdit && <Button onClick={() => setEditing('new')}><Plus size={16} />{cfg.add}</Button>}
       </div>
       <div className="relative"><Search size={16} className="absolute left-3 top-3 text-muted" /><input className="field pl-9" placeholder="Поиск" value={q} onChange={e => setQ(e.target.value)} /></div>
-      {(kind !== 'news' && subjects.length > 0 || kind === 'homework') && (
+      {(kStr !== 'news' && subjects.length > 0 || kStr === 'homework') && (
         <div className="flex flex-wrap gap-1">
-          {kind !== 'news' && ['Все', ...subjects].map(x => <Chip key={x} id={'sub' + kind} label={x} active={subject === x} on={() => setSubject(x)} />)}
-          {kind === 'homework' && <span className="mx-2 w-px bg-line" />}
-          {kind === 'homework' && ([['all', 'Все'], ['todo', 'Не выполнено'], ['done', 'Выполнено']] as const).map(([k, l]) => <Chip key={k} id="flt" label={l} active={flt === k} on={() => setFlt(k)} />)}
+          {kStr !== 'news' && ['Все', ...subjects].map(x => <Chip key={x} id={'sub' + kind} label={x} active={subject === x} on={() => setSubject(x)} />)}
+          {kStr === 'homework' && <span className="mx-2 w-px bg-line" />}
+          {kStr === 'homework' && ([['all', 'Все'], ['todo', 'Не выполнено'], ['done', 'Выполнено']] as const).map(([k, l]) => <Chip key={k} id="flt" label={l} active={flt === k} on={() => setFlt(k)} />)}
         </div>)}
       <p aria-live="polite" className="text-sm text-danger">{posts.error || note}</p>
       {!posts.data ? <div className="space-y-3">{[0, 1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-card bg-surface2" />)}</div>
@@ -122,12 +125,12 @@ export function Feed({ kind }: { kind: PostKind }) {
         <ul className="space-y-3">
           <AnimatePresence initial={false}>
             {list.map((p, i) => {
-              const done = isDone(p.id); const late = kind === 'homework' && !done && p.due_date && p.due_date < today
+              const done = isDone(p.id); const late = kStr === 'homework' && !done && p.due_date && p.due_date < today
               return (
                 <motion.li key={p.id} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
                   transition={{ duration: 0.3, ease, delay: Math.min(i, 6) * 0.04 }} className="card lift p-4">
                   <div className="flex items-start gap-3">
-                    {kind === 'homework' && (
+                    {kStr === 'homework' && (
                       <motion.button whileTap={{ scale: 0.85 }} onClick={() => void toggle(p.id)} aria-label={done ? 'Отметить невыполненным' : 'Отметить выполненным'}
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${done ? 'border-ok bg-ok text-white' : 'border-line hover:border-accent'}`}>
                         {done && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={spring}><Check size={14} /></motion.span>}</motion.button>)}
