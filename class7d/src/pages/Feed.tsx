@@ -53,7 +53,7 @@ function PostForm({ kind, post, subjects, onClose }: { kind: PostKind; post: Pos
       </>)}
       {kind === 'homework' && <label className="flex items-center gap-3 text-sm text-muted">Срок сдачи<input type="date" className="field w-auto" value={due} onChange={e => setDue(e.target.value)} /></label>}
       <textarea className="field min-h-28 py-2" placeholder="Текст, решение или ссылки" value={body} onChange={e => setBody(e.target.value)} />
-      {kind === 'news' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} className="accent-[rgb(var(--accent))]" />Закрепить вверху</label>}
+      {kind === 'news' && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)]} className="accent-[rgb(var(--accent))]" />Закрепить вверху</label>}
       <div className="space-y-2">
         {rows.map(f => (
           <div key={f.key} className="flex items-center justify-between rounded-ctl border border-line px-3 py-1.5 text-sm"><span className="truncate">{f.name} <span className="text-muted">{fmtSize(f.size)}</span></span>
