@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  base: '/7d/', // <--- Обязательно укажи путь к репозиторию
   plugins: [react()],
+  base: './', // Относительный путь, который отлично работает и на Vercel, и на GitHub Pages
 })
